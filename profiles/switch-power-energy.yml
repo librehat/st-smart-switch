@@ -4,10 +4,6 @@ components:
     capabilities:
       - id: switch
         version: 1
-      - id: currentMeasurement
-        version: 1
-      - id: voltageMeasurement
-        version: 1
       - id: powerMeter
         version: 1
       - id: energyMeter
