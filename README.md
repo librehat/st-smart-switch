@@ -14,6 +14,7 @@ Driver ID: `ac462b38-dc98-4ee8-b286-af37efe1f7d5`
 
 ## Supported Models
 
+ - innr/SP 240
  - innr/SP 242
 
 This driver is created because the generic profile from Samsung doesn't work properly for my Innr SP242 smart plug.

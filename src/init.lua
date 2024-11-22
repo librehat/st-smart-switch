@@ -26,6 +26,7 @@ local ElectricalMeasurement = clusters.ElectricalMeasurement
 
 -- Quirks table (if needed)
 local SWITCH_POWER_CONFIGS = {
+  { mfr = "innr", model = "SP 240", energy = { divisor = 100, multiplier = 1 }, power = { divisor = 1, multiplier = 1 } },
   { mfr = "innr", model = "SP 242", energy = { divisor = 100, multiplier = 1 }, power = { divisor = 1, multiplier = 1 } },
 }
 
