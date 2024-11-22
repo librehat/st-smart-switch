@@ -1,0 +1,6 @@
+zigbeeManufacturer:
+  - id: "innr/SP 242"
+    deviceLabel: Innr Outlet
+    manufacturer: innr
+    model: "SP 242"
+    deviceProfileName: switch-power-energy

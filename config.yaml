@@ -1,0 +1,5 @@
+name: 'Zigbee Smart Switch'
+packageKey: 'zigbee-smart-switch'
+permissions:
+  zigbee: {}
+description: "SmartThings driver for Zigbee smart switch devices"
