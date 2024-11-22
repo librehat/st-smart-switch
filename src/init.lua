@@ -16,16 +16,17 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local constants = require "st.zigbee.constants"
-local log = require "log"
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
+local energyMeter_defaults = require "st.zigbee.defaults.energyMeter_defaults"
+local powerMeter_defaults = require "st.zigbee.defaults.powerMeter_defaults"
 
 local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 
 -- Quirks table (if needed)
 local SWITCH_POWER_CONFIGS = {
-  { mfr = "innr", model = "SP 242", energy = { divisor = 1 }, power = { divisor = 1 } },
+  { mfr = "innr", model = "SP 242", energy = { divisor = 100, multiplier = 1 }, power = { divisor = 1, multiplier = 1 } },
 }
 
 local function get_config(device)
@@ -36,43 +37,16 @@ local function get_config(device)
   end
 end
 
-------------------Zigbee handlers------------------------
-
-local function power_meter_handler(driver, device, value, zb_rx)
-  local raw_value = value.value
-  local divisor = device:get_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY) or 1
-  log.trace("Power meter report received raw value=", raw_value, "divisor=", divisor)
-
-  raw_value = raw_value / divisor
-  device:emit_event(capabilities.powerMeter.power({value = raw_value, unit = "W"}))
-end
-
-local function energy_meter_power_consumption_report(driver, device, value, zb_rx)
-  local raw_value = value.value
-  local divisor = device:get_field(constants.SIMPLE_METERING_DIVISOR_KEY) or 1
-  log.trace("Energy meter report received raw value=", raw_value, "divisor=", divisor)
-
-  raw_value = raw_value / divisor
-  device:emit_event(capabilities.energyMeter.energy({ value = raw_value, unit = "Wh" }))
-end
-
 ------------------Driver lifecycles------------------------
-local function do_configure(driver, device)
-  device:refresh()
-  device:configure()
-
-  -- One-time read from the device
-  device:send(SimpleMetering.attributes.Divisor:read(device))
-  device:send(SimpleMetering.attributes.Multiplier:read(device))
-  device:send(ElectricalMeasurement.attributes.ACPowerDivisor:read(device))
-  device:send(ElectricalMeasurement.attributes.ACPowerMultiplier:read(device))
-end
 
 local function device_init(driver, device)
   local config = get_config(device)
   if config ~= nil then
     device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, config.power.divisor, { persist = true })
+    device:set_field(constants.ELECTRICAL_MEASUREMENT_MULTIPLIER_KEY, config.power.divisor, { persist = true })
+
     device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, config.energy.divisor, { persist = true })
+    device:set_field(constants.SIMPLE_METERING_MULTIPLIER_KEY, config.energy.multiplier, { persist = true })
   end
 end
 
@@ -87,16 +61,15 @@ local zigbee_switch_driver = {
   zigbee_handlers = {
     attr = {
       [ElectricalMeasurement.ID] = {
-        [ElectricalMeasurement.attributes.ActivePower.ID] = power_meter_handler
+        [ElectricalMeasurement.attributes.ActivePower.ID] = powerMeter_defaults.active_power_meter_handler,
       },
       [SimpleMetering.ID] = {
-        [SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_meter_power_consumption_report
+        [SimpleMetering.attributes.CurrentSummationDelivered.ID] = energyMeter_defaults.energy_meter_handler,
       },
     }
   },
   lifecycle_handlers = {
     init = device_init,
-    doConfigure = do_configure,
   },
 }
 defaults.register_for_default_handlers(zigbee_switch_driver, zigbee_switch_driver.supported_capabilities)
